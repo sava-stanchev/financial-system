@@ -18,6 +18,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/accounts/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
