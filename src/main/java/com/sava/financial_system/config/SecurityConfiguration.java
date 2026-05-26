@@ -19,6 +19,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/accounts/**").permitAll()
+                        .requestMatchers("/balances/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
