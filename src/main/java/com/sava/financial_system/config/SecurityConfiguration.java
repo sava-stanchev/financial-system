@@ -21,6 +21,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/accounts/**").permitAll()
                         .requestMatchers("/balances/**").permitAll()
                         .requestMatchers("/transactions/**").permitAll()
+                        .requestMatchers("/transfers/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
