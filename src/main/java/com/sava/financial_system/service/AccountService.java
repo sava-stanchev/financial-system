@@ -1,9 +1,7 @@
 package com.sava.financial_system.service;
 
 import com.sava.financial_system.entity.Account;
-import com.sava.financial_system.entity.User;
 import com.sava.financial_system.repository.AccountRepository;
-import com.sava.financial_system.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,11 +10,9 @@ import java.util.UUID;
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
-    private final UserRepository userRepository;
 
-    public AccountService(AccountRepository accountRepository, UserRepository userRepository) {
+    public AccountService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -24,9 +20,6 @@ public class AccountService {
      * Validates user exists before creating account
      */
     public Account createAccount(UUID userId, String type) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
         Account account = new Account();
         account.setUserId(userId);
         account.setType(type != null ? type : "PERSONAL");
@@ -39,9 +32,6 @@ public class AccountService {
      * Get all accounts owned by a user
      */
     public List<Account> getUserAccounts(UUID userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
         return accountRepository.findByUserId(userId);
     }
 
