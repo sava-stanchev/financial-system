@@ -15,18 +15,26 @@ public class User {
     private UUID id;
     @Column(unique = true, nullable = false)
     private String email;
-    private String password;
+    @Column(nullable = false)
+    private String passwordHash;
+    @Column(nullable = false)
     private String firstName;
+    @Column(nullable = false)
     private String lastName;
+    @Column(nullable = false)
     private String role = "USER";
+    @Column(nullable = false)
     private String status = "ACTIVE";
+    @Column(nullable = false)
     private String kycStatus = "PENDING";
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    User() {}
+    public User() {}
 
     public UUID getId() {
         return id;
@@ -39,11 +47,11 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
-    public void setPassword(String password) {
-        this.password = password;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public String getFirstName() {
@@ -84,14 +92,8 @@ public class User {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
-    }
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }
