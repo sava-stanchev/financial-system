@@ -15,7 +15,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Object register(String email, String password, String firstName, String lastName) {
+    public User register(String email, String password, String firstName, String lastName) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("email already exists");
         }
@@ -31,7 +31,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public Object authenticate(String email, String password) {
+    public User authenticate(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("email not found"));
 
