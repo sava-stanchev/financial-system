@@ -18,6 +18,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/users/**").permitAll()
                         .requestMatchers("/accounts/**").permitAll()
                         .requestMatchers("/balances/**").permitAll()
                         .requestMatchers("/transactions/**").permitAll()
