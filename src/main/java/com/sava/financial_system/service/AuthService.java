@@ -1,22 +1,44 @@
 package com.sava.financial_system.service;
 
+import com.sava.financial_system.entity.User;
+import com.sava.financial_system.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
-    // TODO: inject UserRepository when User is rebuilt
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService() {
-        // empty constructor
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Object register(String email, String password, String firstName, String lastName) {
-        // TODO: implement when User is rebuilt
-        return null;
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("email already exists");
+        }
+
+        String passwordHash = passwordEncoder.encode(password);
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordHash);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+
+        return userRepository.save(user);
     }
 
     public Object authenticate(String email, String password) {
-        // TODO: implement when User is rebuilt
-        return null;
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("email not found"));
+
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new IllegalArgumentException("wrong password");
+        }
+
+        return user;
     }
 }
