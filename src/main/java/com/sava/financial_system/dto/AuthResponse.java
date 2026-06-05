@@ -4,7 +4,7 @@ import com.sava.financial_system.entity.User;
 
 import java.util.UUID;
 
-public class LoginResponse {
+public class AuthResponse {
     private UUID id;
     private String email;
     private String firstName;
@@ -12,9 +12,11 @@ public class LoginResponse {
     private String role;
     private String status;
     private String kycStatus;
+    private String accessToken;
+    private String refreshToken;
     private String message;
 
-    public LoginResponse(User user, String message) {
+    public AuthResponse(User user, String message) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
@@ -72,6 +74,20 @@ public class LoginResponse {
     }
     public void setKycStatus(String kycStatus) {
         this.kycStatus = kycStatus;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public String getMessage() {
