@@ -9,10 +9,12 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     public User register(String email, String password, String firstName, String lastName) {
@@ -40,5 +42,13 @@ public class AuthService {
         }
 
         return user;
+    }
+
+    public String generateAccessToken(User user) {
+        return jwtTokenProvider.generateAccessToken(user);
+    }
+
+    public String generateRefreshToken(User user) {
+        return jwtTokenProvider.generateRefreshToken(user);
     }
 }
