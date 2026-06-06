@@ -16,21 +16,18 @@ public class AccountBalance {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
     @Column(nullable = false)
-    private UUID accountId;  // References the account
-
+    private UUID accountId;
     @Column(nullable = false, length = 3)
     private String currencyCode;  // EUR, USD, GBP, etc.
-
     @Column(nullable = false, precision = 19, scale = 4)
-    private BigDecimal availableBalance = BigDecimal.ZERO;  // Can spend this
-
+    private BigDecimal availableBalance = BigDecimal.ZERO;
     @Column(nullable = false, precision = 19, scale = 4)
-    private BigDecimal lockedBalance = BigDecimal.ZERO;  // Locked in transactions
-
+    private BigDecimal lockedBalance = BigDecimal.ZERO;  // locked in transactions
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Version
+    private Long version;
 
     public AccountBalance() {
     }
