@@ -30,6 +30,8 @@ public class TransferService {
     @Transactional
     public Transfer createTransfer(UUID senderAccountId, UUID receiverAccountId,
                                    String currencyCode, BigDecimal amount, String note) {
+        if (amount == null ||  amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Transfer amount must be greater than zero");
         currencyCode = normalizeCurrency(currencyCode);
         verifyAccountsExist(senderAccountId, receiverAccountId);
         if (senderAccountId.equals(receiverAccountId))
@@ -38,43 +40,36 @@ public class TransferService {
         // create transfer in PENDING state
         Transfer transfer = createPendingTransfer(senderAccountId,receiverAccountId, currencyCode, amount, note);
 
-        try {
-            // debit sender
-            accountBalanceService.deductFunds(senderAccountId, currencyCode, amount);
+        // debit sender
+        accountBalanceService.deductFunds(senderAccountId, currencyCode, amount);
 
-            // sender transaction (OUT)
-            transactionService.createTransaction(
-                    senderAccountId,
-                    "TRANSFER",
-                    "OUT",
-                    amount,
-                    currencyCode,
-                    transfer.getId(),
-                    "Transfer to account " + receiverAccountId + (note != null ? ": " + note : "")
-            );
+        // sender transaction (OUT)
+        transactionService.createTransaction(
+                senderAccountId,
+                "TRANSFER",
+                "OUT",
+                amount,
+                currencyCode,
+                transfer.getId(),
+                "Transfer to account " + receiverAccountId + (note != null ? ": " + note : "")
+        );
 
-            // credit receiver
-            accountBalanceService.addFunds(receiverAccountId, currencyCode, amount);
+        // credit receiver
+        accountBalanceService.addFunds(receiverAccountId, currencyCode, amount);
 
-            // receiver transaction (IN)
-            transactionService.createTransaction(
-                    receiverAccountId,
-                    "TRANSFER",
-                    "IN",
-                    amount,
-                    currencyCode,
-                    transfer.getId(),
-                    "Transfer from account " + senderAccountId + (note != null ? ": " + note : "")
-            );
+        // receiver transaction (IN)
+        transactionService.createTransaction(
+                receiverAccountId,
+                "TRANSFER",
+                "IN",
+                amount,
+                currencyCode,
+                transfer.getId(),
+                "Transfer from account " + senderAccountId + (note != null ? ": " + note : "")
+        );
 
-            transfer.setStatus("COMPLETED");
-            return transferRepository.save(transfer);
-        } catch (Exception e) {
-            transfer.setStatus("FAILED");
-            transferRepository.save(transfer);
-
-            throw e;
-        }
+        transfer.setStatus("COMPLETED");
+        return transferRepository.save(transfer);
     }
 
     public List<Transfer> getSentTransfers(UUID accountId) {
