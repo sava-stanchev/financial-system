@@ -4,6 +4,7 @@ import com.sava.financial_system.entity.Transfer;
 import com.sava.financial_system.repository.TransferRepository;
 import com.sava.financial_system.repository.AccountRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,21 +27,16 @@ public class TransferService {
         this.transactionService = transactionService;
     }
 
-    /**
-     * Transfer money from one account to another
-     */
+    @Transactional
     public Transfer createTransfer(UUID senderAccountId, UUID receiverAccountId,
                                    String currencyCode, BigDecimal amount, String note) {
         // 1. VALIDATION
         accountRepository.findById(senderAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Sender account not found"));
-
         accountRepository.findById(receiverAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("Receiver account not found"));
-
-        if (senderAccountId.equals(receiverAccountId)) {
+        if (senderAccountId.equals(receiverAccountId))
             throw new IllegalArgumentException("Cannot transfer to the same account");
-        }
 
         accountBalanceService.getBalance(senderAccountId, currencyCode);
 
