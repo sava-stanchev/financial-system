@@ -30,96 +30,102 @@ public class TransferService {
     @Transactional
     public Transfer createTransfer(UUID senderAccountId, UUID receiverAccountId,
                                    String currencyCode, BigDecimal amount, String note) {
-        // 1. VALIDATION
-        accountRepository.findById(senderAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender account not found"));
-        accountRepository.findById(receiverAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Receiver account not found"));
+        currencyCode = normalizeCurrency(currencyCode);
+        verifyAccountsExist(senderAccountId, receiverAccountId);
         if (senderAccountId.equals(receiverAccountId))
             throw new IllegalArgumentException("Cannot transfer to the same account");
 
-        accountBalanceService.getBalance(senderAccountId, currencyCode);
+        // create transfer in PENDING state
+        Transfer transfer = createPendingTransfer(senderAccountId,receiverAccountId, currencyCode, amount, note);
 
-        // 2. CREATE TRANSFER RECORD
-        Transfer transfer = new Transfer();
-        transfer.setSenderAccountId(senderAccountId);
-        transfer.setReceiverAccountId(receiverAccountId);
-        transfer.setCurrencyCode(currencyCode.toUpperCase());
-        transfer.setAmount(amount);
-        transfer.setStatus("COMPLETED");
-        transfer.setNote(note);
+        try {
+            // debit sender
+            accountBalanceService.deductFunds(senderAccountId, currencyCode, amount);
 
-        Transfer savedTransfer = transferRepository.save(transfer);
+            // sender transaction (OUT)
+            transactionService.createTransaction(
+                    senderAccountId,
+                    "TRANSFER",
+                    "OUT",
+                    amount,
+                    currencyCode,
+                    transfer.getId(),
+                    "Transfer to account " + receiverAccountId + (note != null ? ": " + note : "")
+            );
 
-        // 3. DEDUCT FROM SENDER
-        accountBalanceService.deductFunds(senderAccountId, currencyCode, amount);
+            // credit receiver
+            accountBalanceService.addFunds(receiverAccountId, currencyCode, amount);
 
-        // 4. CREATE SENDER TRANSACTION (OUT)
-        transactionService.createTransaction(
-                senderAccountId,
-                "TRANSFER",
-                "OUT",
-                amount,
-                currencyCode,
-                savedTransfer.getId(),
-                "Transfer to account " + receiverAccountId + (note != null ? ": " + note : "")
-        );
+            // receiver transaction (IN)
+            transactionService.createTransaction(
+                    receiverAccountId,
+                    "TRANSFER",
+                    "IN",
+                    amount,
+                    currencyCode,
+                    transfer.getId(),
+                    "Transfer from account " + senderAccountId + (note != null ? ": " + note : "")
+            );
 
-        // 5. ADD TO RECEIVER
-        accountBalanceService.addFunds(receiverAccountId, currencyCode, amount);
+            transfer.setStatus("COMPLETED");
+            return transferRepository.save(transfer);
+        } catch (Exception e) {
+            transfer.setStatus("FAILED");
+            transferRepository.save(transfer);
 
-        // 6. CREATE RECEIVER TRANSACTION (IN)
-        transactionService.createTransaction(
-                receiverAccountId,
-                "TRANSFER",
-                "IN",
-                amount,
-                currencyCode,
-                savedTransfer.getId(),
-                "Transfer from account " + senderAccountId + (note != null ? ": " + note : "")
-        );
-
-        return savedTransfer;
+            throw e;
+        }
     }
 
-    /**
-     * Get all transfers sent from an account
-     */
     public List<Transfer> getSentTransfers(UUID accountId) {
-        // Verify account exists
-        accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-
+        verifyAccountExists(accountId);
         return transferRepository.findBySenderAccountId(accountId);
     }
 
-    /**
-     * Get all transfers received by an account
-     */
     public List<Transfer> getReceivedTransfers(UUID accountId) {
-        // Verify account exists
-        accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-
+        verifyAccountExists(accountId);
         return transferRepository.findByReceiverAccountId(accountId);
     }
 
-    /**
-     * Get all transfers for an account (sent + received)
-     */
     public List<Transfer> getAccountTransfers(UUID accountId) {
-        // Verify account exists
-        accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-
+        verifyAccountExists(accountId);
         return transferRepository.findBySenderAccountIdOrReceiverAccountId(accountId, accountId);
     }
 
-    /**
-     * Get a single transfer
-     */
     public Transfer getTransfer(UUID transferId) {
         return transferRepository.findById(transferId)
                 .orElseThrow(() -> new IllegalArgumentException("Transfer not found"));
+    }
+
+    private void verifyAccountsExist(UUID senderId, UUID receiverId) {
+        accountRepository.findById(senderId)
+                .orElseThrow(() -> new IllegalArgumentException("Sender account not found"));
+        accountRepository.findById(receiverId)
+                .orElseThrow(() -> new IllegalArgumentException("Receiver account not found"));
+    }
+
+    private void verifyAccountExists(UUID accountId) {
+        accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+    }
+
+    private Transfer createPendingTransfer(UUID senderId, UUID receiverId, String currencyCode,
+                                           BigDecimal amount, String note) {
+        Transfer transfer = new Transfer();
+        transfer.setSenderAccountId(senderId);
+        transfer.setReceiverAccountId(receiverId);
+        transfer.setCurrencyCode(currencyCode);
+        transfer.setAmount(amount);
+        transfer.setNote(note);
+        transfer.setStatus("PENDING");
+
+        return transferRepository.save(transfer);
+    }
+
+    private String normalizeCurrency(String currencyCode) {
+        if (currencyCode == null || currencyCode.isBlank())
+            throw new IllegalArgumentException("Currency code is required");
+
+        return currencyCode.toUpperCase();
     }
 }
