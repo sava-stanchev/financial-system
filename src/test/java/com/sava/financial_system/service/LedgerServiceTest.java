@@ -1,6 +1,8 @@
 package com.sava.financial_system.service;
 
+import com.sava.financial_system.entity.Account;
 import com.sava.financial_system.entity.LedgerEntry;
+import com.sava.financial_system.repository.AccountRepository;
 import com.sava.financial_system.repository.LedgerEntryRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 public class LedgerServiceTest {
     @Autowired
+    AccountRepository accountRepository;
+
+    @Autowired
     LedgerService ledgerService;
 
     @Autowired
@@ -21,7 +26,13 @@ public class LedgerServiceTest {
 
     @Test
     public void createEntriesAndSum() {
-        UUID accountId = UUID.randomUUID();
+        Account account = new Account();
+        account.setUserId(UUID.randomUUID());
+        account.setType("PERSONAL");
+        account.setStatus("ACTIVE");
+        account = accountRepository.save(account);
+
+        UUID accountId = account.getId();
         String cur = "USD";
 
         LedgerEntry e1 = ledgerService.createEntry(accountId, cur, new BigDecimal("100.00"), "CREDIT", "TEST", null);
@@ -32,5 +43,6 @@ public class LedgerServiceTest {
 
         ledgerEntryRepository.deleteById(e1.getId());
         ledgerEntryRepository.deleteById(e2.getId());
+        accountRepository.deleteById(account.getId());
     }
 }

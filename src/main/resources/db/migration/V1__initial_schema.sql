@@ -15,7 +15,7 @@ CREATE TABLE users
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE account
+CREATE TABLE accounts
 (
     id             UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     user_id        UUID NOT NULL REFERENCES users (id),
@@ -26,10 +26,10 @@ CREATE TABLE account
     updated_at     TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE account_balance
+CREATE TABLE account_balances
 (
     id                UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    account_id        UUID           NOT NULL REFERENCES account (id),
+    account_id        UUID           NOT NULL REFERENCES accounts (id),
     currency_code     VARCHAR(8)     NOT NULL,
     available_balance NUMERIC(20, 6) NOT NULL  DEFAULT 0,
     locked_balance    NUMERIC(20, 6) NOT NULL  DEFAULT 0,
@@ -39,10 +39,10 @@ CREATE TABLE account_balance
     CONSTRAINT uq_account_currency UNIQUE (account_id, currency_code)
 );
 
-CREATE TABLE ledger_entry
+CREATE TABLE ledger_entries
 (
     id            UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    account_id    UUID            NOT NULL REFERENCES account (id),
+    account_id    UUID            NOT NULL REFERENCES accounts (id),
     currency_code VARCHAR(8)      NOT NULL,
     amount        NUMERIC(30, 12) NOT NULL,
     direction     VARCHAR(10)     NOT NULL,
@@ -51,11 +51,11 @@ CREATE TABLE ledger_entry
     created_at    TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE transaction_entity
+CREATE TABLE transactions
 (
     id              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    account_id      UUID            NOT NULL REFERENCES account (id),
-    ledger_entry_id UUID REFERENCES ledger_entry (id),
+    account_id      UUID            NOT NULL REFERENCES accounts (id),
+    ledger_entry_id UUID REFERENCES ledger_entries (id),
     type            VARCHAR(50),
     direction       VARCHAR(10),
     amount          NUMERIC(30, 12) NOT NULL,
@@ -65,11 +65,11 @@ CREATE TABLE transaction_entity
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE TABLE transfer
+CREATE TABLE transfers
 (
     id                  UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    sender_account_id   UUID            NOT NULL REFERENCES account (id),
-    receiver_account_id UUID            NOT NULL REFERENCES account (id),
+    sender_account_id   UUID            NOT NULL REFERENCES accounts (id),
+    receiver_account_id UUID            NOT NULL REFERENCES accounts (id),
     currency_code       VARCHAR(8)      NOT NULL,
     amount              NUMERIC(30, 12) NOT NULL,
     note                TEXT,
@@ -103,5 +103,5 @@ CREATE TABLE fx_rate
     created_at     TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
-CREATE INDEX idx_ledger_account ON ledger_entry (account_id);
+CREATE INDEX idx_ledger_account ON ledger_entries (account_id);
 CREATE INDEX idx_outbox_status ON outbox_entry (status);
