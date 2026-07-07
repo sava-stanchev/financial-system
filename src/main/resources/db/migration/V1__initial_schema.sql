@@ -3,16 +3,16 @@ EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users
 (
-    id         UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    email      VARCHAR(255) UNIQUE NOT NULL,
-    password   VARCHAR(255),
-    first_name VARCHAR(255),
-    last_name  VARCHAR(255),
-    role       VARCHAR(50)              DEFAULT 'USER',
-    status     VARCHAR(50)              DEFAULT 'ACTIVE',
-    kyc_status VARCHAR(50)              DEFAULT 'PENDING',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+    id            UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    email         VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),
+    first_name    VARCHAR(255),
+    last_name     VARCHAR(255),
+    role          VARCHAR(50)              DEFAULT 'USER',
+    status        VARCHAR(50)              DEFAULT 'ACTIVE',
+    kyc_status    VARCHAR(50)              DEFAULT 'PENDING',
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at    TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 CREATE TABLE accounts

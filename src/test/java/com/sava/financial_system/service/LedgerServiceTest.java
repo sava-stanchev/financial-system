@@ -2,8 +2,10 @@ package com.sava.financial_system.service;
 
 import com.sava.financial_system.entity.Account;
 import com.sava.financial_system.entity.LedgerEntry;
+import com.sava.financial_system.entity.User;
 import com.sava.financial_system.repository.AccountRepository;
 import com.sava.financial_system.repository.LedgerEntryRepository;
+import com.sava.financial_system.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +21,9 @@ public class LedgerServiceTest {
     AccountRepository accountRepository;
 
     @Autowired
+    UserRepository userRepository;
+
+    @Autowired
     LedgerService ledgerService;
 
     @Autowired
@@ -26,8 +31,18 @@ public class LedgerServiceTest {
 
     @Test
     public void createEntriesAndSum() {
+        User user = new User();
+        user.setEmail("ledger-test@example.com");
+        user.setPasswordHash("test-hash");
+        user.setFirstName("Ledger");
+        user.setLastName("Test");
+        user.setRole("USER");
+        user.setStatus("ACTIVE");
+        user.setKycStatus("PENDING");
+        user = userRepository.save(user);
+
         Account account = new Account();
-        account.setUserId(UUID.randomUUID());
+        account.setUserId(user.getId());
         account.setType("PERSONAL");
         account.setStatus("ACTIVE");
         account = accountRepository.save(account);
@@ -44,5 +59,6 @@ public class LedgerServiceTest {
         ledgerEntryRepository.deleteById(e1.getId());
         ledgerEntryRepository.deleteById(e2.getId());
         accountRepository.deleteById(account.getId());
+        userRepository.deleteById(user.getId());
     }
 }
