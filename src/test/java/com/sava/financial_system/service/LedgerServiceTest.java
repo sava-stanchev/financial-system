@@ -24,6 +24,12 @@ public class LedgerServiceTest {
     UserRepository userRepository;
 
     @Autowired
+    AccountBalanceService accountBalanceService;
+
+    @Autowired
+    TransferService transferService;
+
+    @Autowired
     LedgerService ledgerService;
 
     @Autowired
@@ -60,5 +66,56 @@ public class LedgerServiceTest {
         ledgerEntryRepository.deleteById(e2.getId());
         accountRepository.deleteById(account.getId());
         userRepository.deleteById(user.getId());
+    }
+
+    @Test
+    public void transferCreatesLedgerEntriesForSenderAndReceiver() {
+        User senderUser = new User();
+        senderUser.setEmail("transfer-sender-" + UUID.randomUUID() + "@example.com");
+        senderUser.setPasswordHash("test-hash");
+        senderUser.setFirstName("Transfer");
+        senderUser.setLastName("Sender");
+        senderUser.setRole("USER");
+        senderUser.setStatus("ACTIVE");
+        senderUser.setKycStatus("PENDING");
+        senderUser = userRepository.save(senderUser);
+
+        User receiverUser = new User();
+        receiverUser.setEmail("transfer-receiver-" + UUID.randomUUID() + "@example.com");
+        receiverUser.setPasswordHash("test-hash");
+        receiverUser.setFirstName("Transfer");
+        receiverUser.setLastName("Receiver");
+        receiverUser.setRole("USER");
+        receiverUser.setStatus("ACTIVE");
+        receiverUser.setKycStatus("PENDING");
+        receiverUser = userRepository.save(receiverUser);
+
+        Account senderAccount = new Account();
+        senderAccount.setUserId(senderUser.getId());
+        senderAccount.setType("PERSONAL");
+        senderAccount.setStatus("ACTIVE");
+        senderAccount = accountRepository.save(senderAccount);
+
+        Account receiverAccount = new Account();
+        receiverAccount.setUserId(receiverUser.getId());
+        receiverAccount.setType("PERSONAL");
+        receiverAccount.setStatus("ACTIVE");
+        receiverAccount = accountRepository.save(receiverAccount);
+
+        accountBalanceService.initializeBalance(senderAccount.getId(), "USD", new BigDecimal("200.00"));
+        accountBalanceService.initializeBalance(receiverAccount.getId(), "USD", new BigDecimal("100.00"));
+
+        transferService.createTransfer(
+                senderAccount.getId(),
+                receiverAccount.getId(),
+                "USD",
+                new BigDecimal("75.00"),
+                "test transfer"
+        );
+
+        assertThat(ledgerService.getLedgerBalance(senderAccount.getId(), "USD"))
+                .isEqualByComparingTo(new BigDecimal("-75.00"));
+        assertThat(ledgerService.getLedgerBalance(receiverAccount.getId(), "USD"))
+                .isEqualByComparingTo(new BigDecimal("75.00"));
     }
 }

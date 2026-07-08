@@ -16,15 +16,18 @@ public class TransferService {
     private final AccountRepository accountRepository;
     private final AccountBalanceService accountBalanceService;
     private final TransactionService transactionService;
+    private final LedgerService ledgerService;
 
     public TransferService(TransferRepository transferRepository,
                            AccountRepository accountRepository,
                            AccountBalanceService accountBalanceService,
-                           TransactionService transactionService) {
+                           TransactionService transactionService,
+                           LedgerService ledgerService) {
         this.transferRepository = transferRepository;
         this.accountRepository = accountRepository;
         this.accountBalanceService = accountBalanceService;
         this.transactionService = transactionService;
+        this.ledgerService = ledgerService;
     }
 
     @Transactional
@@ -42,6 +45,14 @@ public class TransferService {
 
         // debit sender
         accountBalanceService.deductFunds(senderAccountId, currencyCode, amount);
+        ledgerService.createEntry(
+                senderAccountId,
+                currencyCode,
+                amount.negate(),
+                "DEBIT",
+                "TRANSFER",
+                transfer.getId()
+        );
 
         // sender transaction (OUT)
         transactionService.createTransaction(
@@ -56,6 +67,14 @@ public class TransferService {
 
         // credit receiver
         accountBalanceService.addFunds(receiverAccountId, currencyCode, amount);
+        ledgerService.createEntry(
+                receiverAccountId,
+                currencyCode,
+                amount,
+                "CREDIT",
+                "TRANSFER",
+                transfer.getId()
+        );
 
         // receiver transaction (IN)
         transactionService.createTransaction(

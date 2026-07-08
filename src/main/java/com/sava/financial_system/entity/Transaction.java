@@ -16,7 +16,7 @@ public class Transaction {
     private UUID accountId;  // Which account this transaction belongs to
 
     @Column
-    private UUID balanceId;  // Which balance/currency (optional reference)
+    private UUID ledgerEntryId;
 
     @Column(nullable = false)
     private String type;  // DEPOSIT, WITHDRAWAL, TRANSFER, EXCHANGE, CARD_PAYMENT, REFUND
@@ -57,12 +57,12 @@ public class Transaction {
         this.accountId = accountId;
     }
 
-    public UUID getBalanceId() {
-        return balanceId;
+    public UUID getLedgerEntryId() {
+        return ledgerEntryId;
     }
 
-    public void setBalanceId(UUID balanceId) {
-        this.balanceId = balanceId;
+    public void setLedgerEntryId(UUID ledgerEntryId) {
+        this.ledgerEntryId = ledgerEntryId;
     }
 
     public String getType() {
